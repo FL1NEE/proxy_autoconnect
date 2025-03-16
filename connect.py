@@ -122,7 +122,7 @@ def check_proxy_availability(proxy_url: str) -> bool:
 def reboot_system() -> None:
     """Перезагрузка системы"""
     print("Для применения настроек прокси требуется перезагрузка системы.")
-    confirm = input("Хотите перезагрузить систему сейчас? (y/n): ").strip().lower()
+    confirm = input("Хотите перезагрузить систему сейчас? (y/n): ")
     if confirm == "y":
         print("Перезагрузка системы...")
         os.system("sudo reboot")
