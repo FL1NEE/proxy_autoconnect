@@ -16,10 +16,11 @@ class ProxyData:
 
 proxy_data = ProxyData()
 
-def get_current_ip() -> str:
+def get_current_ip(proxy_url: str = None) -> str:
     """Получение текущего IP-адреса"""
     try:
-        response = requests.get("https://api.ipify.org?format=json", timeout=30)
+        proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+        response = requests.get("https://api.ipify.org?format=json", proxies=proxies, timeout=30)
         return response.json().get("ip")
     except Exception as e:
         print(f"Ошибка при получении IP-адреса: {e}")
@@ -46,6 +47,17 @@ def load_proxy_data() -> bool:
         return True
     return False
 
+def parse_proxy_input(proxy_input: str) -> tuple:
+    """Разбор строки прокси в формате login:pass@ip:port"""
+    try:
+        credentials, server = proxy_input.split("@")
+        username, password = credentials.split(":")
+        ip, port = server.split(":")
+        return ip, port, username, password
+    except ValueError:
+        print("Неверный формат прокси. Используйте формат: login:pass@ip:port")
+        return None, None, None, None
+
 def is_proxy_configured() -> bool:
     """Проверка, были ли данные прокси уже добавлены в /etc/environment"""
     if os.path.exists("/etc/environment"):
@@ -54,20 +66,22 @@ def is_proxy_configured() -> bool:
             return "http_proxy" in content and "https_proxy" in content
     return False
 
-def setup_proxy() -> None:
+def setup_proxy(proxy_input: str) -> None:
     """Настройка прокси"""
-    if load_proxy_data():
-        print("Используются ранее сохранённые данные прокси.")
-    else:
-        proxy_data.proxy_server = input("Введите адрес прокси-сервера (например, proxy-server:port): ")
-        proxy_data.username = input("Введите логин для прокси: ")
-        proxy_data.password = input("Введите пароль для прокси: ")
-        save_proxy_data()
+    ip, port, username, password = parse_proxy_input(proxy_input)
+    if not ip or not port or not username or not password:
+        print("Ошибка при разборе данных прокси.")
+        exit(1)
+
+    proxy_data.proxy_server = f"{ip}:{port}"
+    proxy_data.username = username
+    proxy_data.password = password
+    save_proxy_data()
 
     # Установка глобального прокси
     with open("/etc/environment", "a") as f:
-        f.write(f"\nhttp_proxy=http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}\n")
-        f.write(f"https_proxy=http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}\n")
+        f.write(f"\nhttp_proxy=http://{username}:{password}@{ip}:{port}\n")
+        f.write(f"https_proxy=http://{username}:{password}@{ip}:{port}\n")
         f.write("no_proxy=\"localhost,127.0.0.1,::1\"\n")
     print("Прокси успешно настроен.")
 
@@ -91,16 +105,14 @@ def validate_proxy(original_ip: str) -> None:
     attempt = 0
 
     while attempt < max_attempts:
-        current_ip = get_current_ip()
-        proxy_url = f"http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}"
-
+        current_ip = get_current_ip(f"http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}")
         if current_ip:
             print(f"Текущий IP-адрес: {current_ip}")
             if current_ip != original_ip:
                 print("IP-адрес изменился. Прокси работает корректно.")
                 return
 
-        if check_proxy_availability(proxy_url):
+        if check_proxy_availability(f"http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}"):
             print("Прокси успешно настроен и работает.")
             return
         else:
@@ -108,7 +120,7 @@ def validate_proxy(original_ip: str) -> None:
             attempt += 1
             if attempt < max_attempts:
                 print(f"Попытка {attempt}/{max_attempts}. Повторная настройка прокси...")
-                setup_proxy()
+                setup_proxy(input("Введите данные прокси в формате login:pass@ip:port: "))
             else:
                 print("Прокси не удалось настроить после нескольких попыток.")
                 exit(1)
@@ -137,7 +149,7 @@ def main() -> None:
         print("Прокси уже настроен.")
         if not load_proxy_data():
             print("Не удалось загрузить данные прокси. Настройте прокси заново.")
-            setup_proxy()
+            setup_proxy(input("Введите данные прокси в формате login:pass@ip:port: "))
             reboot_system()
             return
 
@@ -149,7 +161,8 @@ def main() -> None:
             print("Прокси работает корректно.")
     else:
         print("Настройка прокси...")
-        setup_proxy()
+        proxy_input = input("Введите данные прокси в формате login:pass@ip:port: ")
+        setup_proxy(proxy_input)
         reboot_system()
 
 if __name__ == "__main__":
