@@ -119,36 +119,6 @@ def check_proxy_availability(proxy_url: str) -> bool:
         print(f"Ошибка при проверке прокси: {e}")
         return False
 
-def validate_proxy(original_ip: str) -> bool:
-    """Проверка работы прокси"""
-    max_attempts = 3
-    attempt = 0
-
-    while attempt < max_attempts:
-        proxy_url = f"http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}"
-        current_ip = get_current_ip(proxy_url)
-
-        if current_ip:
-            print(f"Текущий IP-адрес: {current_ip}")
-            if current_ip != original_ip:
-                print("IP-адрес изменился. Прокси работает корректно.")
-                return True
-
-        if check_proxy_availability(proxy_url):
-            print("Прокси успешно настроен и работает.")
-            return True
-        else:
-            print("Прокси не работает.")
-            attempt += 1
-            if attempt < max_attempts:
-                print(f"Попытка {attempt}/{max_attempts}. Введите новый прокси...")
-                new_proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
-                if not setup_proxy(new_proxy_input):
-                    print("Не удалось настроить новый прокси. Повторите попытку.")
-            else:
-                print("Прокси не удалось настроить после нескольких попыток.")
-                return False
-
 def reboot_system() -> None:
     """Перезагрузка системы"""
     print("Для применения настроек прокси требуется перезагрузка системы.")
@@ -160,41 +130,53 @@ def reboot_system() -> None:
         print("Перезагрузите систему вручную для применения изменений.")
 
 def main() -> None:
-    # Шаг 1: Проверка текущего IP-адреса
-    print("Проверка текущего IP-адреса...")
-    original_ip = get_current_ip()
-    if not original_ip:
-        print("Не удалось получить текущий IP-адрес. Проверьте подключение к интернету.")
-        exit()
-    print(f"Текущий IP-адрес: {original_ip}")
-
-    # Шаг 2: Проверка наличия настроек прокси
-    if is_proxy_configured():
-        print("Прокси уже настроен.")
-        if not load_proxy_data():
-            print("Не удалось загрузить данные прокси. Настройте прокси заново.")
-            proxy_input = input("Введите данные прокси в формате login:pass@ip:port: ")
+    while True:
+        # Шаг 1: Проверка текущего IP-адреса
+        print("Проверка текущего IP-адреса...")
+        original_ip = get_current_ip()
+        if not original_ip:
+            print("Не удалось получить текущий IP-адрес. Проверьте подключение к интернету.")
+            proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
             if not setup_proxy(proxy_input):
-                print("Не удалось настроить прокси.")
-                exit()
+                print("Не удалось настроить новый прокси. Повторите попытку.")
+                continue
             reboot_system()
             return
 
-        proxy_url = f"http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}"
-        if not check_proxy_availability(proxy_url):
-            print("Текущий прокси не работает. Настройте новый прокси.")
-            new_proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
-            if not setup_proxy(new_proxy_input):
-                print("Не удалось настроить новый прокси.")
-                exit()
+        print(f"Текущий IP-адрес: {original_ip}")
+
+        # Шаг 2: Проверка наличия настроек прокси
+        if is_proxy_configured():
+            print("Прокси уже настроен.")
+            if not load_proxy_data():
+                print("Не удалось загрузить данные прокси. Настройте прокси заново.")
+                proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
+                if not setup_proxy(proxy_input):
+                    print("Не удалось настроить новый прокси. Повторите попытку.")
+                    continue
+                reboot_system()
+                return
+
+            proxy_url = f"http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}"
+            if not check_proxy_availability(proxy_url):
+                print("Текущий прокси не работает. Настройте новый прокси.")
+                proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
+                if not setup_proxy(proxy_input):
+                    print("Не удалось настроить новый прокси. Повторите попытку.")
+                    continue
+                reboot_system()
+                return
+            else:
+                print("Прокси работает корректно.")
+                break
+        else:
+            print("Настройка прокси...")
+            proxy_input = input("Введите данные прокси в формате login:pass@ip:port: ")
+            if not setup_proxy(proxy_input):
+                print("Не удалось настроить прокси. Повторите попытку.")
+                continue
             reboot_system()
-    else:
-        print("Настройка прокси...")
-        proxy_input = input("Введите данные прокси в формате login:pass@ip:port: ")
-        if not setup_proxy(proxy_input):
-            print("Не удалось настроить прокси.")
-            exit()
-        reboot_system()
+            return
 
 if __name__ == "__main__":
     main()
