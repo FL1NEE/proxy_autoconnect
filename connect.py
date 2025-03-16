@@ -3,6 +3,7 @@ import os
 import subprocess
 import requests
 import json
+from requests.exceptions import ProxyError
 
 # Путь к файлу для хранения данных прокси
 PROXY_DATA_FILE: str = "proxy_data.json"
@@ -22,6 +23,12 @@ def get_current_ip(proxy_url: str = None) -> str:
         proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
         response = requests.get("https://api.ipify.org?format=json", proxies=proxies, timeout=30)
         return response.json().get("ip")
+    except ProxyError as e:
+        if "407 Proxy Authentication Required" in str(e):
+            print("Ошибка: Прокси требует аутентификацию. Проверьте логин и пароль.")
+        else:
+            print(f"Ошибка при подключении через прокси: {e}")
+        return None
     except Exception as e:
         print(f"Ошибка при получении IP-адреса: {e}")
         return None
@@ -96,6 +103,12 @@ def check_proxy_availability(proxy_url: str) -> bool:
         else:
             print("Прокси не работает. Статус код:", response.status_code)
             return False
+    except ProxyError as e:
+        if "407 Proxy Authentication Required" in str(e):
+            print("Ошибка: Прокси требует аутентификацию. Проверьте логин и пароль.")
+        else:
+            print(f"Ошибка при проверке прокси: {e}")
+        return False
     except Exception as e:
         print(f"Ошибка при проверке прокси: {e}")
         return False
