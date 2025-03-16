@@ -19,7 +19,7 @@ proxy_data = ProxyData()
 def get_current_ip() -> str:
     """Получение текущего IP-адреса"""
     try:
-        response = requests.get("https://api.ipify.org?format=json", timeout=10)
+        response = requests.get("https://api.ipify.org?format=json", timeout=30)
         return response.json().get("ip")
     except Exception as e:
         print(f"Ошибка при получении IP-адреса: {e}")
@@ -74,7 +74,7 @@ def setup_proxy() -> None:
 def check_proxy_availability(proxy_url: str) -> bool:
     """Проверка доступности прокси"""
     try:
-        response = requests.get("https://ipv4.jsonip.com/", proxies={"http": proxy_url, "https": proxy_url}, timeout=20)
+        response = requests.get("https://ipv4.jsonip.com/", proxies={"http": proxy_url, "https": proxy_url}, timeout=30)
         if response.status_code == 200:
             print(f"Прокси работает. Полученный IP: {response.json()['ip']}")
             return True
@@ -93,6 +93,12 @@ def validate_proxy(original_ip: str) -> None:
     while attempt < max_attempts:
         current_ip = get_current_ip()
         proxy_url = f"http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}"
+
+        if current_ip:
+            print(f"Текущий IP-адрес: {current_ip}")
+            if current_ip != original_ip:
+                print("IP-адрес изменился. Прокси работает корректно.")
+                return
 
         if check_proxy_availability(proxy_url):
             print("Прокси успешно настроен и работает.")
@@ -129,10 +135,18 @@ def main() -> None:
     # Шаг 2: Проверка наличия настроек прокси
     if is_proxy_configured():
         print("Прокси уже настроен.")
+        if not load_proxy_data():
+            print("Не удалось загрузить данные прокси. Настройте прокси заново.")
+            setup_proxy()
+            reboot_system()
+            return
+
         proxy_url = f"http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}"
         if not check_proxy_availability(proxy_url):
             print("Прокси не работает. Проверяем работу прокси...")
             validate_proxy(original_ip)
+        else:
+            print("Прокси работает корректно.")
     else:
         print("Настройка прокси...")
         setup_proxy()
