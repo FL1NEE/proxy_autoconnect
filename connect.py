@@ -150,7 +150,7 @@ def main() -> None:
             print("Прокси уже настроен.")
             if not load_proxy_data():
                 print("Не удалось загрузить данные прокси. Настройте прокси заново.")
-                proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
+                proxy_input = 12332
                 if not setup_proxy(proxy_input):
                     print("Не удалось настроить новый прокси. Повторите попытку.")
                     continue
@@ -160,7 +160,7 @@ def main() -> None:
             proxy_url = f"http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}"
             if not check_proxy_availability(proxy_url):
                 print("Текущий прокси не работает. Настройте новый прокси.")
-                proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
+                proxy_input = 1221
                 if not setup_proxy(proxy_input):
                     print("Не удалось настроить новый прокси. Повторите попытку.")
                     continue
@@ -171,7 +171,7 @@ def main() -> None:
                 break
         else:
             print("Настройка прокси...")
-            proxy_input = input("Введите данные прокси в формате login:pass@ip:port: ")
+            proxy_input = 21313
             if not setup_proxy(proxy_input):
                 print("Не удалось настроить прокси. Повторите попытку.")
                 continue
