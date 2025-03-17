@@ -122,7 +122,7 @@ def check_proxy_availability(proxy_url: str) -> bool:
 def reboot_system() -> None:
     """Перезагрузка системы"""
     print("Для применения настроек прокси требуется перезагрузка системы.")
-    confirm = input("Хотите перезагрузить систему сейчас? (y/n): ")
+    confirm = input("Хотите перезагрузить систему сейчас? (y/n): ").strip().lower()
     if confirm == "y":
         print("Перезагрузка системы...")
         os.system("sudo reboot")
@@ -136,7 +136,7 @@ def main() -> None:
         original_ip = get_current_ip()
         if not original_ip:
             print("Не удалось получить текущий IP-адрес. Проверьте подключение к интернету.")
-            proxy_input = 12331
+            proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
             if not setup_proxy(proxy_input):
                 print("Не удалось настроить новый прокси. Повторите попытку.")
                 continue
@@ -150,7 +150,7 @@ def main() -> None:
             print("Прокси уже настроен.")
             if not load_proxy_data():
                 print("Не удалось загрузить данные прокси. Настройте прокси заново.")
-                proxy_input = 12332
+                proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
                 if not setup_proxy(proxy_input):
                     print("Не удалось настроить новый прокси. Повторите попытку.")
                     continue
@@ -160,7 +160,7 @@ def main() -> None:
             proxy_url = f"http://{proxy_data.username}:{proxy_data.password}@{proxy_data.proxy_server}"
             if not check_proxy_availability(proxy_url):
                 print("Текущий прокси не работает. Настройте новый прокси.")
-                proxy_input = 1221
+                proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
                 if not setup_proxy(proxy_input):
                     print("Не удалось настроить новый прокси. Повторите попытку.")
                     continue
@@ -171,7 +171,7 @@ def main() -> None:
                 break
         else:
             print("Настройка прокси...")
-            proxy_input = 21313
+            proxy_input = input("Введите данные прокси в формате login:pass@ip:port: ")
             if not setup_proxy(proxy_input):
                 print("Не удалось настроить прокси. Повторите попытку.")
                 continue
