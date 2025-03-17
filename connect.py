@@ -136,7 +136,7 @@ def main() -> None:
         original_ip = get_current_ip()
         if not original_ip:
             print("Не удалось получить текущий IP-адрес. Проверьте подключение к интернету.")
-            proxy_input = input("Введите данные нового прокси в формате login:pass@ip:port: ")
+            proxy_input = 12331
             if not setup_proxy(proxy_input):
                 print("Не удалось настроить новый прокси. Повторите попытку.")
                 continue
